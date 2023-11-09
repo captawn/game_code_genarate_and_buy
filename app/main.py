@@ -417,5 +417,6 @@ def create_sms_table():
 
 
 if __name__ == "__main__":
+    # nima
     create_sms_table()
     app.run("0.0.0.0", 5000, debug=False)
