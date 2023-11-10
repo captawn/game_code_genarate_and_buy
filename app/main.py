@@ -42,11 +42,6 @@ login_manager.init_app(app)
 login_manager.login_view = "login"
 login_manager.login_message_category = 'danger'
 
-#
-# def allowed_file(filename):
-#     """ checks the extension of the passed filename to be in the allowed extensions"""
-#     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 
 app.config.update(SECRET_KEY=config.SECRET_KEY)
 
