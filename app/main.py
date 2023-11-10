@@ -1,4 +1,8 @@
 import os
+from datetime import datetime
+
+import random
+import string
 import subprocess
 
 import MySQLdb
@@ -202,6 +206,31 @@ def check_one_serial():
     else:
         for code in found_code:
          flash(f'{code} ', 'info')
+    return redirect('/')
+
+
+def generate_random_string(length=30):
+    characters = string.ascii_letters + string.digits
+    random_string = ''.join(random.choice(characters) for _ in range(length))
+    return random_string
+
+
+@app.route("/register_code", methods=["POST"])
+@login_required
+def create_code():
+    if request.method == 'POST':
+        counter = request.form.get('codeCounter', type=int)
+        for _ in range(counter):
+            random_string = generate_random_string()
+
+            db = get_database_connection()
+            cur = db.cursor()
+            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            status = 1
+            cur.execute("INSERT INTO  codes (code, active_date, status) VALUES (%s, %s, %s)", (random_string, current_time, status ))
+            db.commit()
+            db.close()
+
     return redirect('/')
 
 
