@@ -134,30 +134,27 @@
                                     <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                                         <thead>
                                             <tr>
-                                                <th>Status</th>
-                                                <th>Sender</th>
-                                                <th>Message</th>
-                                                <th>Answer</th>
-                                                <th>Date</th>
+                                                <th>code_value</th>
+                                                <th>active_date</th>
+                                                <th>expire_date</th>
+                                                <th>status</th>
                                             </tr>
                                         </thead>
                                         <tfoot>
                                             <tr>
-                                                <th>Status</th>
-                                                <th>Sender</th>
-                                                <th>Message</th>
+                                                <th>code_value</th>
+                                                <th>active_date</th>
+                                                <th>expire_date</th>
                                                 <th>Answer</th>
-                                                <th>Date</th>
                                             </tr>
                                         </tfoot>
                                         <tbody>
-                                            {% for sms in data.smss %}
+                                            {% for cd in data.codes %}
                                             <tr>
-                                                <td>{{sms.status}}</td>
-                                                <td>{{sms.sender}}</td>
-                                                <td style="direction: rtl; text-align: center">{{sms.message}}</td>
-                                                <td style="direction: rtl; text-align: right;">{{sms.answer}}</td>
-                                                <td>{{sms.date}}</td>
+                                                <td>{{cd.code_value}}</td>
+                                                <td>{{cd.active_date}}</td>
+                                                <td >{{cd.expire_date}}</td>
+                                                <td >{{cd.status}}</td>
                                             </tr>
                                             {% endfor %}
                                         </tbody>
