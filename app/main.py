@@ -136,9 +136,9 @@ def home():
 
     # get last 5000 sms
     cur.execute("SELECT * FROM codes ORDER BY active_date DESC LIMIT 5000")
-    all_smss = cur.fetchall()
+    all_codes = cur.fetchall()
     smss = []
-    for sms in all_smss:
+    for sms in all_codes:
         status, sender, message, answer, date = sms
         smss.append({'status': status, 'sender': sender, 'message': message, 'answer': answer, 'date': date})
 
