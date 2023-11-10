@@ -191,15 +191,19 @@ def login():
 #     return jsonify(ret), 200
 
 
-# @app.route("/check_one_serial", methods=["POST"])
-# @login_required
-# def check_one_serial():
-#     """ to check whether a serial number is valid or not"""
-#     serial_to_check = request.form["serial"]
-#     status, answer = check_serial(serial_to_check)
-#     flash(f'{status} - {answer}', 'info')
-#
-#     return redirect('/')
+@app.route("/check_one_serial", methods=["POST"])
+@login_required
+def check_one_serial():
+    code_to_check = request.form["serial"]
+    # return code_to_check
+    found_code=[]
+    found_code = check_code(code_to_check)
+    if found_code == 'not found':
+        flash(f'{found_code} ', 'info')
+    else:
+        for code in found_code:
+         flash(f'{code} ', 'info')
+    return redirect('/')
 
 
 @app.route("/logout")
@@ -281,59 +285,25 @@ def get_database_connection():
 
 
 
-# def check_serial(serial):
-#     """ gets one serial number and returns appropriate
-#     answer to that, after looking it up in the db
-#     """
-#     original_serial = serial
-#     serial = normalize_string(serial)
-#
-#     db = get_database_connection()
-#
-#     with db.cursor() as cur:
-#         results = cur.execute("SELECT * FROM invalids WHERE invalid_serial = %s", (serial,))
-#         if results > 0:
-#             answer = dedent(f"""\
-#                 {original_serial}
-#                 این شماره هولوگرام یافت نشد. لطفا دوباره سعی کنید  و یا با واحد پشتیبانی تماس حاصل فرمایید.
-#                 ساختار صحیح شماره هولوگرام بصورت دو حرف انگلیسی و 7 یا 8 رقم در دنباله آن می باشد. مثال:
-#                 FA1234567
-#                 شماره تماس با بخش پشتیبانی فروش شرکت التک:
-#                 021-22038385""")
-#
-#             return 'FAILURE', answer
-#
-#         results = cur.execute("SELECT * FROM serials WHERE start_serial <= %s and end_serial >= %s", (serial, serial))
-#         if results > 1:
-#             answer = dedent(f"""\
-#                 {original_serial}
-#                 این شماره هولوگرام مورد تایید است.
-#                 برای اطلاعات بیشتر از نوع محصول با بخش پشتیبانی فروش شرکت التک تماس حاصل فرمایید:
-#                 021-22038385""")
-#             return 'DOUBLE', answer
-#         elif results == 1:
-#             ret = cur.fetchone()
-#             desc = ret[2]
-#             ref_number = ret[1]
-#             date = ret[5].date()
-#             rettext = ret[6] + '\n' + ret[7]
-#             answer = dedent(f"""{original_serial}
-# {ref_number}
-# {desc}
-# Hologram date: {date}
-# {rettext}""")
-#             return 'OK', answer
-#
-#
-#     answer = dedent(f"""\
-#         {original_serial}
-#         این شماره هولوگرام یافت نشد. لطفا دوباره سعی کنید  و یا با واحد پشتیبانی تماس حاصل فرمایید.
-#         ساختار صحیح شماره هولوگرام بصورت دو حرف انگلیسی و 7 یا 8 رقم در دنباله آن می باشد. مثال:
-#         FA1234567
-#         شماره تماس با بخش پشتیبانی فروش شرکت التک:
-#         021-22038385""")
-#
-#     return 'NOT-FOUND', answer
+def check_code(code):
+
+    db = get_database_connection()
+
+    with db.cursor() as cur:
+        cur.execute("SELECT * FROM codes WHERE code = %s", (code,))
+        all_codes = cur.fetchall()
+        codes = []
+        for code in all_codes:
+            code_value = code[1]
+            active_date = code[2]
+            expire_date = code[3]
+            status = code[4]
+            codes.append(
+                {'status': status, 'expire_date': expire_date, 'active_date': active_date, 'code_value': code_value})
+
+        if len(codes) == 0:
+            return "not found"
+        return codes
 
 
 # @app.route(f'/v1/{CALL_BACK_TOKEN}/process', methods=['POST'])
