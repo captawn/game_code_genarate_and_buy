@@ -24,6 +24,7 @@ from flask_login import (
 from werkzeug.utils import secure_filename
 
 import config
+
 ############################# end import##################################
 
 app = Flask(__name__)
@@ -137,10 +138,13 @@ def home():
     # get last 5000 sms
     cur.execute("SELECT * FROM codes ORDER BY active_date DESC LIMIT 5000")
     all_codes = cur.fetchall()
-    smss = []
-    for sms in all_codes:
-        status, sender, message, answer, date = sms
-        smss.append({'status': status, 'sender': sender, 'message': message, 'answer': answer, 'date': date})
+    codes = []
+    for code in all_codes:
+        code_value = code[1]
+        active_date = code[2]
+        expire_date = code[3]
+        status = code[4]
+        codes.append({'status': status, 'expire_date': expire_date, 'active_date': active_date, 'code_value': code_value})
 
     # collect some stats for the GUI
     try:
@@ -155,20 +159,7 @@ def home():
     except:
         num_failure = 'error'
 
-    try:
-        cur.execute("SELECT count(*) FROM PROCESSED_SMS WHERE status = 'DOUBLE'")
-        num_double = cur.fetchone()[0]
-    except:
-        num_double = 'error'
-
-    try:
-        cur.execute("SELECT count(*) FROM PROCESSED_SMS WHERE status = 'NOT-FOUND'")
-        num_notfound = cur.fetchone()[0]
-    except:
-        num_notfound = 'error'
-
-    return render_template('index.html', data={'smss': smss, 'ok': num_ok, 'failure': num_failure, 'double': num_double,
-                                               'notfound': num_notfound})
+    return render_template('index.html', data={'codes': codes, 'ok': num_ok, 'failure': num_failure})
 
 @app.route("/login", methods=["GET", "POST"])
 @limiter.limit("10 per minute")
