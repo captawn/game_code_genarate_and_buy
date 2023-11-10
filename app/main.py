@@ -135,7 +135,7 @@ def home():
 
 
     # get last 5000 sms
-    cur.execute("SELECT * FROM PROCESSED_SMS ORDER BY date DESC LIMIT 5000")
+    cur.execute("SELECT * FROM codes ORDER BY active_date DESC LIMIT 5000")
     all_smss = cur.fetchall()
     smss = []
     for sms in all_smss:
@@ -144,13 +144,13 @@ def home():
 
     # collect some stats for the GUI
     try:
-        cur.execute("SELECT count(*) FROM PROCESSED_SMS WHERE status = 'OK'")
+        cur.execute("SELECT count(*) FROM codes WHERE status = 1")
         num_ok = cur.fetchone()[0]
     except: 
         num_ok = 'error'
 
     try:        
-        cur.execute("SELECT count(*) FROM PROCESSED_SMS WHERE status = 'FAILURE'")
+        cur.execute("SELECT count(*) FROM codes WHERE status = 2")
         num_failure = cur.fetchone()[0]
     except:
         num_failure = 'error'
