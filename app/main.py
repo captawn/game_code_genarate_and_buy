@@ -157,7 +157,7 @@ def home():
         num_ok = 'error'
 
     try:        
-        cur.execute("SELECT count(*) FROM codes WHERE status = 2")
+        cur.execute("SELECT count(*) FROM codes WHERE status = 0")
         num_failure = cur.fetchone()[0]
     except:
         num_failure = 'error'
