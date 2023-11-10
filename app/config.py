@@ -14,7 +14,7 @@ MYSQL_DB_NAME = 'pt'
 CALL_BACK_TOKEN = 'CALL BACK TOKEN'
 
 # login cedentials
-USERNAME = 'jadi'
+USERNAME = 'ramin'
 PASSWORD = 'pass'
 
 # generate one strong secret key for flask.

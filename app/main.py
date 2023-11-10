@@ -142,9 +142,8 @@ def home():
     for code in all_codes:
         code_value = code[1]
         active_date = code[2]
-        expire_date = code[3]
-        status = code[4]
-        codes.append({'status': status, 'expire_date': expire_date, 'active_date': active_date, 'code_value': code_value})
+        status = code[3]
+        codes.append({'status': status, 'active_date': active_date, 'code_value': code_value})
 
     # collect some stats for the GUI
     try:
@@ -296,10 +295,9 @@ def check_code(code):
         for code in all_codes:
             code_value = code[1]
             active_date = code[2]
-            expire_date = code[3]
-            status = code[4]
+            status = code[3]
             codes.append(
-                {'status': status, 'expire_date': expire_date, 'active_date': active_date, 'code_value': code_value})
+                {'status': status, 'active_date': active_date, 'code_value': code_value})
 
         if len(codes) == 0:
             return "not found"
