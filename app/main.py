@@ -234,6 +234,11 @@ def create_code():
     return redirect('/')
 
 
+@app.route("/user")
+# @login_required
+def user_method():
+    return render_template('user.html', data={})
+
 @app.route("/logout")
 @login_required
 def logout():
