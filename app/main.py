@@ -1,11 +1,7 @@
 import os
-import re
 import subprocess
-import time
-from textwrap import dedent
 
 import MySQLdb
-import requests
 from flask import (
     Flask,
     abort,
@@ -28,6 +24,7 @@ from flask_login import (
 from werkzeug.utils import secure_filename
 
 import config
+############################# end import##################################
 
 app = Flask(__name__)
 limiter = Limiter(get_remote_address, app=app)
@@ -45,15 +42,15 @@ login_manager.init_app(app)
 login_manager.login_view = "login"
 login_manager.login_message_category = 'danger'
 
-
-def allowed_file(filename):
-    """ checks the extension of the passed filename to be in the allowed extensions"""
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+#
+# def allowed_file(filename):
+#     """ checks the extension of the passed filename to be in the allowed extensions"""
+#     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 app.config.update(SECRET_KEY=config.SECRET_KEY)
 
-
+# user
 class User(UserMixin):
     """ A minimal and singleton user class used only for administrative tasks """
     def __init__(self, id):
@@ -197,26 +194,26 @@ def login():
         return render_template('login.html')
 
 
-@app.route(f"/v1/{config.REMOTE_CALL_API_KEY}/check_one_serial/<serial>", methods=["GET"])
-def check_one_serial_api(serial):
-    """ to check whether a serial number is valid or not using api
-    caller should use something like /v1/ABCDSECRET/check_one_serial/AA10000
-    answer back json which is status = DOUBLE, FAILURE, OK, NOT-FOUND
-    """
-    status, answer = check_serial(serial)
-    ret = {'status': status, 'answer': answer}
-    return jsonify(ret), 200
+# @app.route(f"/v1/{config.REMOTE_CALL_API_KEY}/check_one_serial/<serial>", methods=["GET"])
+# def check_one_serial_api(serial):
+#     """ to check whether a serial number is valid or not using api
+#     caller should use something like /v1/ABCDSECRET/check_one_serial/AA10000
+#     answer back json which is status = DOUBLE, FAILURE, OK, NOT-FOUND
+#     """
+#     status, answer = check_serial(serial)
+#     ret = {'status': status, 'answer': answer}
+#     return jsonify(ret), 200
 
 
-@app.route("/check_one_serial", methods=["POST"])
-@login_required
-def check_one_serial():
-    """ to check whether a serial number is valid or not"""
-    serial_to_check = request.form["serial"]
-    status, answer = check_serial(serial_to_check)
-    flash(f'{status} - {answer}', 'info')
-
-    return redirect('/')
+# @app.route("/check_one_serial", methods=["POST"])
+# @login_required
+# def check_one_serial():
+#     """ to check whether a serial number is valid or not"""
+#     serial_to_check = request.form["serial"]
+#     status, answer = check_serial(serial_to_check)
+#     flash(f'{status} - {answer}', 'info')
+#
+#     return redirect('/')
 
 
 @app.route("/logout")
@@ -258,131 +255,131 @@ def get_database_connection():
                            charset='utf8')
 
 
-def send_sms(receptor, message):
-    """ gets a MSISDN and a message, then uses KaveNegar to send sms."""
-    url = f'https://api.kavenegar.com/v1/{config.API_KEY}/sms/send.json'
-    data = {"message": message,
-            "receptor": receptor}
-    res = requests.post(url, data)
+# def send_sms(receptor, message):
+#     """ gets a MSISDN and a message, then uses KaveNegar to send sms."""
+#     url = f'https://api.kavenegar.com/v1/{config.API_KEY}/sms/send.json'
+#     data = {"message": message,
+#             "receptor": receptor}
+#     res = requests.post(url, data)
 
 
-def _remove_non_alphanum_char(string):
-    return re.sub(r'\W+', '', string)
+# def _remove_non_alphanum_char(string):
+#     return re.sub(r'\W+', '', string)
 
 
-def _translate_numbers(current, new, string):
-    translation_table = str.maketrans(current, new)
-    return string.translate(translation_table)
+# def _translate_numbers(current, new, string):
+#     translation_table = str.maketrans(current, new)
+#     return string.translate(translation_table)
 
-def normalize_string(serial_number, fixed_size=30):
-    """ gets a serial number and standardize it as following:
-    >> converts(removes others) all chars to English upper letters and numbers
-    >> adds zeros between letters and numbers to make it fixed length """
-
-    serial_number = _remove_non_alphanum_char(serial_number)
-    serial_number = serial_number.upper()
-
-    persian_numerals = '۱۲۳۴۵۶۷۸۹۰'
-    arabic_numerals = '١٢٣٤٥٦٧٨٩٠'
-    english_numerals = '1234567890'
-
-    serial_number = _translate_numbers(persian_numerals, english_numerals, serial_number)
-    serial_number = _translate_numbers(arabic_numerals, english_numerals, serial_number)
-
-    all_digit = "".join(re.findall("\d", serial_number))
-    all_alpha = "".join(re.findall("[A-Z]", serial_number))
-
-    missing_zeros = "0" * (fixed_size - len(all_alpha + all_digit))
-
-    return f"{all_alpha}{missing_zeros}{all_digit}"
-
-
-
-def check_serial(serial):
-    """ gets one serial number and returns appropriate
-    answer to that, after looking it up in the db
-    """
-    original_serial = serial
-    serial = normalize_string(serial)
-
-    db = get_database_connection()
-
-    with db.cursor() as cur:
-        results = cur.execute("SELECT * FROM invalids WHERE invalid_serial = %s", (serial,))
-        if results > 0:
-            answer = dedent(f"""\
-                {original_serial}
-                این شماره هولوگرام یافت نشد. لطفا دوباره سعی کنید  و یا با واحد پشتیبانی تماس حاصل فرمایید.
-                ساختار صحیح شماره هولوگرام بصورت دو حرف انگلیسی و 7 یا 8 رقم در دنباله آن می باشد. مثال:
-                FA1234567
-                شماره تماس با بخش پشتیبانی فروش شرکت التک:
-                021-22038385""")
-
-            return 'FAILURE', answer
-
-        results = cur.execute("SELECT * FROM serials WHERE start_serial <= %s and end_serial >= %s", (serial, serial))
-        if results > 1:
-            answer = dedent(f"""\
-                {original_serial}
-                این شماره هولوگرام مورد تایید است.
-                برای اطلاعات بیشتر از نوع محصول با بخش پشتیبانی فروش شرکت التک تماس حاصل فرمایید:
-                021-22038385""")
-            return 'DOUBLE', answer
-        elif results == 1:
-            ret = cur.fetchone()
-            desc = ret[2]
-            ref_number = ret[1]
-            date = ret[5].date()
-            rettext = ret[6] + '\n' + ret[7]
-            answer = dedent(f"""{original_serial}
-{ref_number}
-{desc}
-Hologram date: {date}
-{rettext}""")
-            return 'OK', answer
+# def normalize_string(serial_number, fixed_size=30):
+#     """ gets a serial number and standardize it as following:
+#     >> converts(removes others) all chars to English upper letters and numbers
+#     >> adds zeros between letters and numbers to make it fixed length """
+#
+#     serial_number = _remove_non_alphanum_char(serial_number)
+#     serial_number = serial_number.upper()
+#
+#     persian_numerals = '۱۲۳۴۵۶۷۸۹۰'
+#     arabic_numerals = '١٢٣٤٥٦٧٨٩٠'
+#     english_numerals = '1234567890'
+#
+#     serial_number = _translate_numbers(persian_numerals, english_numerals, serial_number)
+#     serial_number = _translate_numbers(arabic_numerals, english_numerals, serial_number)
+#
+#     all_digit = "".join(re.findall("\d", serial_number))
+#     all_alpha = "".join(re.findall("[A-Z]", serial_number))
+#
+#     missing_zeros = "0" * (fixed_size - len(all_alpha + all_digit))
+#
+#     return f"{all_alpha}{missing_zeros}{all_digit}"
 
 
-    answer = dedent(f"""\
-        {original_serial}
-        این شماره هولوگرام یافت نشد. لطفا دوباره سعی کنید  و یا با واحد پشتیبانی تماس حاصل فرمایید.
-        ساختار صحیح شماره هولوگرام بصورت دو حرف انگلیسی و 7 یا 8 رقم در دنباله آن می باشد. مثال:
-        FA1234567
-        شماره تماس با بخش پشتیبانی فروش شرکت التک:
-        021-22038385""")
 
-    return 'NOT-FOUND', answer
+# def check_serial(serial):
+#     """ gets one serial number and returns appropriate
+#     answer to that, after looking it up in the db
+#     """
+#     original_serial = serial
+#     serial = normalize_string(serial)
+#
+#     db = get_database_connection()
+#
+#     with db.cursor() as cur:
+#         results = cur.execute("SELECT * FROM invalids WHERE invalid_serial = %s", (serial,))
+#         if results > 0:
+#             answer = dedent(f"""\
+#                 {original_serial}
+#                 این شماره هولوگرام یافت نشد. لطفا دوباره سعی کنید  و یا با واحد پشتیبانی تماس حاصل فرمایید.
+#                 ساختار صحیح شماره هولوگرام بصورت دو حرف انگلیسی و 7 یا 8 رقم در دنباله آن می باشد. مثال:
+#                 FA1234567
+#                 شماره تماس با بخش پشتیبانی فروش شرکت التک:
+#                 021-22038385""")
+#
+#             return 'FAILURE', answer
+#
+#         results = cur.execute("SELECT * FROM serials WHERE start_serial <= %s and end_serial >= %s", (serial, serial))
+#         if results > 1:
+#             answer = dedent(f"""\
+#                 {original_serial}
+#                 این شماره هولوگرام مورد تایید است.
+#                 برای اطلاعات بیشتر از نوع محصول با بخش پشتیبانی فروش شرکت التک تماس حاصل فرمایید:
+#                 021-22038385""")
+#             return 'DOUBLE', answer
+#         elif results == 1:
+#             ret = cur.fetchone()
+#             desc = ret[2]
+#             ref_number = ret[1]
+#             date = ret[5].date()
+#             rettext = ret[6] + '\n' + ret[7]
+#             answer = dedent(f"""{original_serial}
+# {ref_number}
+# {desc}
+# Hologram date: {date}
+# {rettext}""")
+#             return 'OK', answer
+#
+#
+#     answer = dedent(f"""\
+#         {original_serial}
+#         این شماره هولوگرام یافت نشد. لطفا دوباره سعی کنید  و یا با واحد پشتیبانی تماس حاصل فرمایید.
+#         ساختار صحیح شماره هولوگرام بصورت دو حرف انگلیسی و 7 یا 8 رقم در دنباله آن می باشد. مثال:
+#         FA1234567
+#         شماره تماس با بخش پشتیبانی فروش شرکت التک:
+#         021-22038385""")
+#
+#     return 'NOT-FOUND', answer
 
 
-@app.route(f'/v1/{CALL_BACK_TOKEN}/process', methods=['POST'])
-def process():
-    """ this is a call back from KaveNegar. Will get sender and message and
-    will check if it is valid, then answers back.
-    This is secured by 'CALL_BACK_TOKEN' in order to avoid mal-intended calls
-    """
-    data = request.form
-    sender = data["from"]
-    message = data["message"]
+# @app.route(f'/v1/{CALL_BACK_TOKEN}/process', methods=['POST'])
+# def process():
+#     """ this is a call back from KaveNegar. Will get sender and message and
+#     will check if it is valid, then answers back.
+#     This is secured by 'CALL_BACK_TOKEN' in order to avoid mal-intended calls
+#     """
+#     data = request.form
+#     sender = data["from"]
+#     message = data["message"]
+#
+#     status, answer = check_serial(message)
+#
+#     db = get_database_connection()
+#
+#     cur = db.cursor()
+#
+#     log_new_sms(status, sender, message, answer, cur)
+#
+#     db.commit()
+#     db.close()
+#
+#     send_sms(sender, answer)
+#     ret = {"message": "processed"}
+#     return jsonify(ret), 200
 
-    status, answer = check_serial(message)
-
-    db = get_database_connection()
-
-    cur = db.cursor()
-
-    log_new_sms(status, sender, message, answer, cur)
-    
-    db.commit()
-    db.close()
-
-    send_sms(sender, answer)
-    ret = {"message": "processed"}
-    return jsonify(ret), 200
-
-def log_new_sms(status, sender, message, answer, cur):
-    if len(message) > 40:
-        return
-    now = time.strftime('%Y-%m-%d %H:%M:%S')
-    cur.execute("INSERT INTO PROCESSED_SMS (status, sender, message, answer, date) VALUES (%s, %s, %s, %s, %s)", (status, sender, message, answer, now))
+# def log_new_sms(status, sender, message, answer, cur):
+#     if len(message) > 40:
+#         return
+#     now = time.strftime('%Y-%m-%d %H:%M:%S')
+#     cur.execute("INSERT INTO PROCESSED_SMS (status, sender, message, answer, date) VALUES (%s, %s, %s, %s, %s)", (status, sender, message, answer, now))
     
 @app.errorhandler(404)
 def page_not_found(error):
@@ -391,28 +388,28 @@ def page_not_found(error):
 
 
 
-def create_sms_table():
-    """Creates PROCESSED_SMS table on database if it's not exists."""
-
-    db = get_database_connection()
-
-    cur = db.cursor()
-
-    try:
-        cur.execute("""CREATE TABLE IF NOT EXISTS PROCESSED_SMS (
-            status ENUM('OK', 'FAILURE', 'DOUBLE', 'NOT-FOUND'),
-            sender CHAR(20),
-            message VARCHAR(400),
-            answer VARCHAR(400),
-            date DATETIME, INDEX(date, status));""")
-        db.commit()
-    except Exception as e:
-        flash(f'Error creating PROCESSED_SMS table; {e}', 'danger')
-        
-    db.close()
+# def create_sms_table():
+#     """Creates PROCESSED_SMS table on database if it's not exists."""
+#
+#     db = get_database_connection()
+#
+#     cur = db.cursor()
+#
+#     try:
+#         cur.execute("""CREATE TABLE IF NOT EXISTS PROCESSED_SMS (
+#             status ENUM('OK', 'FAILURE', 'DOUBLE', 'NOT-FOUND'),
+#             sender CHAR(20),
+#             message VARCHAR(400),
+#             answer VARCHAR(400),
+#             date DATETIME, INDEX(date, status));""")
+#         db.commit()
+#     except Exception as e:
+#         flash(f'Error creating PROCESSED_SMS table; {e}', 'danger')
+#
+#     db.close()
 
 
 if __name__ == "__main__":
     # nima
-    create_sms_table()
+    # create_sms_table()
     app.run("0.0.0.0", 5000, debug=False)
