@@ -60,14 +60,15 @@
 
                             <div class="col-xl-6">
                                 <div class="card mb-4">
-                                    <div class="card-header"><i class="fas fa-database mr-1"></i>Create Codes</div>
+                                    <div class="card-header"><i class="fas fa-database mr-1"></i>Please enter Voucher</div>
                                     <div class="card-body">
-                                        <form action="/register_code" method="post">
-                                            <div class="form-group"><label class="small mb-1" for="inputUsername">counter</label><input
-                                                    class="form-control py-4" id="inputUsername" type="number"
-                                                    placeholder="Enter the number you want to Create Codes" name="codeCounter"/></div>
+                                        <form action="/buy_with_voucher" method="post">
+                                            <div class="form-group">
+                                                <input
+                                                    class="form-control py-4" id="Voucher" type="text"
+                                                    placeholder="Enter your Voucher " name="Voucher"/></div>
                                             <div class="form-group d-flex align-items-center justify-content-between mt-4 mb-0">
-                                                <input type="submit" class="btn btn-primary" value="Create Codes"></div>
+                                                <input type="submit" class="btn btn-primary" value="enter"></div>
                                         </form>
                                     </div>
                                 </div>

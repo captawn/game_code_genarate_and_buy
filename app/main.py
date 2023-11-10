@@ -239,6 +239,29 @@ def create_code():
 def user_method():
     return render_template('user.html', data={})
 
+
+
+
+
+@app.route("/buy_with_voucher", methods=["POST"])
+@login_required
+def buy_with_voucher():
+    if request.method == 'POST':
+        voucher = request.form.get('Voucher')
+        check_voucher = check_code(voucher)
+        if check_voucher == "not found":
+           flash('your Voucher is not valid', 'danger')
+           return redirect('/user')
+    flash('your Voucher is valid', 'info')
+
+    return redirect('/user')
+
+
+
+
+
+
+
 @app.route("/logout")
 @login_required
 def logout():
